@@ -16,7 +16,7 @@ const pool = new Pool({
  * @param {String} email The email of the user.
  * @return {Promise<{}>} A promise to the user.
  */
-const getUserWithEmail = function (email) {
+const getUserWithEmail = function(email) {
   return pool
     .query(`SELECT * FROM users WHERE email = $1`, [email])
     .then((result) => {
@@ -36,7 +36,7 @@ const getUserWithEmail = function (email) {
 const getUserWithId = function(id) {
   return pool
     .query(`SELECT * FROM users WHERE id = $1`, [id])
-    .then ((result) => {
+    .then((result) => {
       return result.rows[0];
     })
     .catch((err) => {
@@ -50,7 +50,7 @@ const getUserWithId = function(id) {
  * @param {{name: string, password: string, email: string}} user
  * @return {Promise<{}>} A promise to the user.
  */
-const addUser = function (user) {
+const addUser = function(user) {
   return pool
     .query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`, [user.name, user.email, user.password])
     .then((result) => {
@@ -69,8 +69,23 @@ const addUser = function (user) {
  * @param {string} guest_id The id of the user.
  * @return {Promise<[{}]>} A promise to the reservations.
  */
-const getAllReservations = function (guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+const getAllReservations = function(guestId, limit = 10) {
+  return pool
+    .query(`
+    SELECT reservations.id, properties.title, properties.thumbnail_photo_url, properties.cover_photo_url, properties.number_of_bedrooms, properties.number_of_bathrooms, properties.parking_spaces, properties.cost_per_night, reservations.start_date, AVG(property_reviews.rating)
+    FROM reservations
+    JOIN properties ON reservations.property_id = properties.id
+    JOIN property_reviews ON properties.id = property_reviews.property_id
+    WHERE reservations.guest_id = $1
+    GROUP BY properties.id, reservations.id
+    ORDER BY reservations.start_date
+    LIMIT $2`, [guestId, limit])
+    .then((result) => {
+      return result.rows;
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
 };
 
 /// Properties
@@ -81,7 +96,7 @@ const getAllReservations = function (guest_id, limit = 10) {
  * @param {*} limit The number of results to return.
  * @return {Promise<[{}]>}  A promise to the properties.
  */
-const getAllProperties = function (options, limit = 10) {
+const getAllProperties = function(options, limit = 10) {
   return pool
     .query(`
       SELECT * FROM properties LIMIT $1`, [limit])
@@ -98,7 +113,7 @@ const getAllProperties = function (options, limit = 10) {
  * @param {{}} property An object containing all of the property details.
  * @return {Promise<{}>} A promise to the property.
  */
-const addProperty = function (property) {
+const addProperty = function(property) {
   const propertyId = Object.keys(properties).length + 1;
   property.id = propertyId;
   properties[propertyId] = property;
