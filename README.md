@@ -23,6 +23,5 @@ A simple multi-page Airbnb clone that uses a server-side Javascript to display t
 - express
 - nodemon
 
-## Screenshots
-![""]()
-![""]()
+## Entity Relationship Diagram
+!["Entity Relationship Diagram for LightBnB database"](https://github.com/Devvaru/LightBnB/blob/main/docs/LightBnB.jpg)
