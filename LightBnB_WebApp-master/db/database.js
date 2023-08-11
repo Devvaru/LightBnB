@@ -1,6 +1,3 @@
-const { query } = require("express");
-const properties = require("./json/properties.json");
-const users = require("./json/users.json");
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -19,7 +16,7 @@ const pool = new Pool({
  */
 const getUserWithEmail = function(email) {
   return pool
-    .query(`SELECT * FROM users WHERE email = $1`, [email])
+    .query(`SELECT * FROM users WHERE email = $1 LIMIT 1`, [email])
     .then((result) => {
       return result.rows[0];
     })
@@ -86,6 +83,7 @@ const getAllReservations = function(guestId, limit = 10) {
     })
     .catch((err) => {
       console.log(err.message);
+      return null;
     });
 };
 
@@ -98,7 +96,7 @@ const getAllReservations = function(guestId, limit = 10) {
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = function(options, limit = 10) {
-  // Setup an array to hold any parameters that may be available for the query
+  // Set up array to hold any parameters that may be available for the query
   const queryParams = [];
 
   // Start the query with all information that comes before the WHERE clause
@@ -108,6 +106,7 @@ const getAllProperties = function(options, limit = 10) {
     JOIN property_reviews ON properties.id = property_id
   `;
 
+  // Set up array to hold any WHERE conditions
   const conditions = [];
 
   // Check if a city has been passed in as an option. Add the city to the params array and create a WHERE clause for the city
@@ -150,11 +149,13 @@ const getAllProperties = function(options, limit = 10) {
   queryParams.push(limit);
   queryString += ` ORDER BY cost_per_night LIMIT $${queryParams.length};`;
 
-  // Console log everything just to make sure we've done it right
-  console.log(queryString, queryParams);
-
   // Run the query
-  return pool.query(queryString, queryParams).then((res) => res.rows);
+  return pool.query(queryString, queryParams)
+    .then((res) => res.rows)
+    .catch((err) => {
+      console.log(err.message);
+      return null;
+    });
 };
 
 /**
